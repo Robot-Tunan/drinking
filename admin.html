@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>后台配置 - 聚会幸运转盘</title>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .page-title {
+            margin: 15px 0 30px 0;
+            color: #ff7675;
+            font-size: 26px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .settings-content {
+            width: 100%;
+            max-width: 550px; /* 电脑端自动锁死最佳宽度 */
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .setting-group label { font-weight: bold; font-size: 14px; color: #b2bec3; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background-color: #1e1e1e;
+            color: #fff;
+            -webkit-appearance: none;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus { 
+            border-color: var(--primary-color); 
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            text-align: center;
+        }
+        .btn:active { opacity: 0.8; }
+        .btn-blue { background-color: #3498db; color: #fff; }
+        .btn-danger { background-color: #3a3a3a; color: #ff7675; border: 1px solid #ff7675; }
+        .btn-small { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+        
+        /* 滑块开关 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .3s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* 规则池状态区 */
+        .pool-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #341f1f;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #ff7675;
+            border: 1px dashed #ff7675;
+        }
+
+        .options-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #1e1e1e;
+        }
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
+        }
+        .option-item.is-drawn {
+            text-decoration: line-through;
+            color: #666;
+            background-color: #252525;
+        }
+        .option-item:last-child { border-bottom: none; }
+        .delete-btn {
+            background: #442222;
+            border: none;
+            color: #ff7675;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="page-title">⚙️ 转盘大厅核心配置后台</h1>
+    
+    <div class="settings-content">
+        <div class="setting-group">
+            <label>转盘标题</label>
+            <input type="text" id="titleInput" placeholder="请输入标题，例如：这次该谁喝">
+        </div>
+
+        <div class="setting-group">
+            <label>转圈时长 (秒)</label>
+            <input type="number" id="durationInput" min="1" max="15" value="4">
+        </div>
+
+        <div class="setting-group">
+            <div class="setting-row">
+                <label>不重复抽取 (抽中后剔除规则)</label>
+                <label class="switch">
+                    <input type="checkbox" id="noRepeatToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="pool-status-bar" id="poolStatusBar" style="display: none;">
+            <span id="poolStatusText">已淘汰：0 / 0 条规则</span>
+            <button class="btn btn-danger btn-small" onclick="resetDrawnPool()">重置规则池</button>
+        </div>
+
+        <div class="setting-group">
+            <label>当前规则列表 (共 <span id="totalCount">0</span> 条)</label>
+            <div class="options-list" id="optionsList"></div>
+        </div>
+
+        <div class="setting-group">
+            <label>批量追加新规则 (每行一个)</label>
+            <textarea id="batchInput" placeholder="输入新的规则内容&#10;回车换行可输入多个"></textarea>
+            <button class="btn" onclick="addBatchOptions()">追加到列表</button>
+        </div>
+        
+        <button class="btn btn-blue" onclick="startNewWheel()">✨ 开启全新游戏转盘</button>
+        <button class="btn btn-danger" onclick="resetDefaults()">恢复初始100条惩罚规则</button>
+    </div>
+
+    <script>
+        // 内置初始数据保持一致
+        const defaultData = {
+            title: "这次该谁喝",
+            duration: 4,
+            noRepeat: false,
+            options: [
+                "穿裙子的喝", "不会唱歌的喝", "不会做饭的喝", "有纹身的喝", "朋友圈三天可见的喝", 
+                "手机电量低于50%的喝", "骰子猜左右手", "指甲最长的喝", "这个月过生日的喝", "不会开车的喝", 
+                "美甲有钻的喝", "3天内发过朋友圈的喝", "有对象的喝", "戴眼镜的喝", "发际线最高的喝", 
+                "抽烟的喝", "短发的喝", "相册自拍最多的喝", "考驾照挂过科的喝", "没穿过包臀裙的喝", 
+                "谈恋爱爱秀恩爱的喝", "经常不回消息的喝", "抖音关注美女最多的喝", "微信置顶是工作群的喝", 
+                "最近分手的喝", "还没删前任的喝", "刷B站5级以上的喝", "点歌只会唱高潮的喝", 
+                "不会划拳的喝", "手机有合成大西瓜的喝", "用过栓Q梗的喝", "没买过卫生巾的喝", 
+                "手机交友软件最多的喝", "暖男喝", "一人一句土味情话，说不出的喝", "喂左边玩家喝", 
+                "找陌生人喂自己喝", "穿牛仔裤的喝", "知道奥利给来源的喝", "熬夜超过凌晨2点的喝", 
+                "当天没吃早饭的喝", "穿运动鞋的喝", "留过长头发的喝", "谈过3次以上恋爱的喝", 
+                "喜欢熬夜的喝", "会做饭的喝", "单身的喝", "当天化妆的喝", "手机壁纸是人物的喝", 
+                "喜欢喝奶茶的喝", "爱吃辣的喝", "养宠物的喝", "近视超过300度的喝", "经常失眠的喝", 
+                "去过省外旅游的喝", "会游泳的喝", "喜欢看恐怖片的喝", "玩过剧本杀的喝", "经常网购的喝", 
+                "微信余额少于100的喝", "今天洗头的喝", "穿拖鞋的喝", "头发染过色的喝", "经常健身的喝", 
+                "爱吃甜食的喝", "熬夜党喝", "社恐喝", "社牛喝", "喜欢追剧的喝", "会跳舞的喝", 
+                "喜欢运动的喝", "当天穿黑色衣服的喝", "当天穿白色衣服的喝", "戴耳环的喝", "戴手表的喝", 
+                "穿高跟鞋的喝", "爱吃夜宵的喝", "会打麻将的喝", "会打扑克的喝", "经常喝酒的喝", 
+                "第一次喝酒的喝", "酒量最好的喝", "酒量最差的喝", "当天最开心的喝", "当天最难过的喝", 
+                "年龄最大的喝", "年龄最小的喝", "体重最重的喝", "体重最轻的喝", "身高最高的喝", 
+                "身高最矮的喝", "第一个到现场的喝", "最后一个到现场的喝", "主动买单的喝", "今天没运动的喝", 
+                "不爱吃香菜的喝", "喜欢喝咖啡的喝", "经常换头像的喝", "今天运气最差的喝", "过（不喝）"
+            ],
+            drawnOptions: []
+        };
+
+        let wheelData = JSON.parse(JSON.stringify(defaultData));
+
+        const titleInput = document.getElementById('titleInput');
+        const durationInput = document.getElementById('durationInput');
+        const noRepeatToggle = document.getElementById('noRepeatToggle');
+        const poolStatusBar = document.getElementById('poolStatusBar');
+        const poolStatusText = document.getElementById('poolStatusText');
+        const optionsList = document.getElementById('optionsList');
+        const batchInput = document.getElementById('batchInput');
+        const totalCountSpan = document.getElementById('totalCount');
+
+        function init() {
+            loadData();
+            bindEvents();
+            updateSettingsUI();
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('myCustomWheelData_drinking');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object') {
+                        wheelData = parsed;
+                        if (!wheelData.options) wheelData.options = [];
+                        if (!wheelData.drawnOptions) wheelData.drawnOptions = [];
+                    }
+                } catch (e) {
+                    wheelData = JSON.parse(JSON.stringify(defaultData));
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('myCustomWheelData_drinking', JSON.stringify(wheelData));
+        }
+
+        function bindEvents() {
+            titleInput.addEventListener('input', (e) => {
+                wheelData.title = e.target.value;
+                saveData();
+            });
+            durationInput.addEventListener('change', (e) => {
+                let val = parseInt(e.target.value);
+                if(isNaN(val) || val < 1) val = 1;
+                wheelData.duration = val;
+                saveData();
+            });
+            noRepeatToggle.addEventListener('change', (e) => {
+                wheelData.noRepeat = e.target.checked;
+                saveData();
+                updateSettingsUI();
+            });
+        }
+
+        function updateSettingsUI() {
+            titleInput.value = wheelData.title || '';
+            durationInput.value = wheelData.duration || 4;
+            noRepeatToggle.checked = !!wheelData.noRepeat;
+            
+            const totalOptCount = wheelData.options ? wheelData.options.length : 0;
+            const drawnOptCount = wheelData.drawnOptions ? wheelData.drawnOptions.length : 0;
+            totalCountSpan.innerText = totalOptCount;
+            
+            if (wheelData.noRepeat) {
+                poolStatusBar.style.display = 'flex';
+                poolStatusText.innerText = `已淘汰：${drawnOptCount} / ${totalOptCount} 条规则`;
+            } else {
+                poolStatusBar.style.display = 'none';
+            }
+            
+            optionsList.innerHTML = '';
+            if (wheelData.options) {
+                wheelData.options.forEach((opt, index) => {
+                    const isDrawn = wheelData.noRepeat && wheelData.drawnOptions && wheelData.drawnOptions.includes(opt);
+                    const div = document.createElement('div');
+                    div.className = `option-item ${isDrawn ? 'is-drawn' : ''}`;
+                    div.innerHTML = `
+                        <span>${opt} ${isDrawn ? '(已过滤)' : ''}</span>
+                        <button class="delete-btn" onclick="removeOption(${index})">✖</button>
+                    `;
+                    optionsList.appendChild(div);
+                });
+            }
+        }
+
+        function addBatchOptions() {
+            const text = batchInput.value.trim();
+            if (!text) return;
+            
+            const newOptions = text.split('\n').map(item => item.trim()).filter(item => item !== '');
+            if (newOptions.length > 0) {
+                if (!wheelData.options) wheelData.options = [];
+                wheelData.options = wheelData.options.concat(newOptions);
+                batchInput.value = ''; 
+                saveData();
+                updateSettingsUI();
+                alert(`成功追加 ${newOptions.length} 条新规则！`);
+            }
+        }
+
+        function removeOption(index) {
+            if(!wheelData.options || wheelData.options.length <= 1) {
+                alert("至少保留一个选项！");
+                return;
+            }
+            const removedOpt = wheelData.options.splice(index, 1)[0];
+            if (wheelData.drawnOptions) {
+                wheelData.drawnOptions = wheelData.drawnOptions.filter(opt => opt !== removedOpt);
+            }
+            saveData();
+            updateSettingsUI();
+        }
+
+        function startNewWheel() {
+            if(confirm("确定要开启新转盘吗？这将彻底清空当前所有的标题、规则和淘汰记录。")) {
+                wheelData.title = "";
+                wheelData.options = [];
+                wheelData.drawnOptions = [];
+                saveData();
+                updateSettingsUI();
+                alert("已开辟全新空转盘！");
+            }
+        }
+
+        function resetDrawnPool() {
+            wheelData.drawnOptions = [];
+            saveData();
+            updateSettingsUI();
+            alert("已清空淘汰记录，所有指令重新归位。");
+        }
+
+        function resetDefaults() {
+            if(confirm("确定要恢复到初始的100条酒桌规则吗？这会清除你临时追加的选项。")) {
+                wheelData = JSON.parse(JSON.stringify(defaultData));
+                saveData();
+                updateSettingsUI();
+                alert("已重置为初始100条酒桌规则！");
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>这次该谁喝 - 聚会幸运转盘</title>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            user-select: none;
+            -webkit-user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .page-view {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .page-title {
+            margin: 0 0 2vh 0;
+            color: #ff7675;
+            font-size: clamp(24px, 5vh, 40px); /* 字体大小随屏幕高度自动缩放 */
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* --- 响应式转盘容器（核心修改） --- */
+        .wheel-container {
+            position: relative;
+            /* 手机和电脑通用的核心尺寸算法：取屏幕高宽中较小者的 70%，最大不超过 650px */
+            width: min(70vmin, 650px);
+            height: min(70vmin, 650px);
+            border-radius: 50%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+            border: min(1.2vmin, 8px) solid #333;
+            overflow: hidden;
+            background: #222;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            transform-origin: center center;
+        }
+        .pointer {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            /* 箭头大小随转盘大小自适应 */
+            border-left: min(3vmin, 20px) solid transparent;
+            border-right: min(3vmin, 20px) solid transparent;
+            border-top: min(6vmin, 45px) solid #fdcb6e;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+        }
+        .spin-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(16vmin, 90px);
+            height: min(16vmin, 90px);
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: min(4.5vmin, 24px);
+            font-weight: bold;
+            color: #e74c3c;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: min(1vmin, 5px) solid #e74c3c;
+            z-index: 5;
+        }
+        .spin-btn:active { transform: translate(-50%, -50%) scale(0.93); }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            text-align: center;
+        }
+        .btn:active { opacity: 0.8; }
+
+        /* 弹窗样式 */
+        #resultModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: #2d2d2d;
+            border: 2px solid #ff7675;
+            padding: 35px 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 25px rgba(231, 76, 60, 0.3);
+            width: 85%;
+            max-width: 360px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-content h2 { margin: 0 0 20px 0; color: #b2bec3; font-size: 18px; letter-spacing: 2px;}
+        .modal-content p { font-size: 26px; font-weight: bold; color: #ff7675; margin: 0 0 30px 0; line-height: 1.4;}
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-view">
+        <h1 class="page-title" id="mainTitle">这次该谁喝</h1>
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheelCanvas" width="1000" height="1000"></canvas>
+            <div class="spin-btn" id="spinBtn">GO</div>
+        </div>
+    </div>
+
+    <div id="resultModal">
+        <div class="modal-content">
+            <h2>📢 谁中了招？ 📢</h2>
+            <p id="resultText">选项</p>
+            <button class="btn" style="width: 100%; letter-spacing: 2px;" onclick="closeModal()">收到！这就喝</button>
+        </div>
+    </div>
+
+    <script>
+        const colors = [
+            "#e74c3c", "#34495e", "#9b59b6", "#16a085", 
+            "#27ae60", "#2980b9", "#f1c40f", "#e67e22"
+        ];
+        
+        const defaultData = {
+            title: "这次该谁喝",
+            duration: 4,
+            noRepeat: false,
+            options: [
+                "穿裙子的喝", "不会唱歌的喝", "不会做饭的喝", "有纹身的喝", "朋友圈三天可见的喝", 
+                "手机电量低于50%的喝", "骰子猜左右手", "指甲最长的喝", "这个月过生日的喝", "不会开车的喝", 
+                "美甲有钻的喝", "3天内发过朋友圈的喝", "有对象的喝", "戴眼镜的喝", "发际线最高的喝", 
+                "抽烟的喝", "短发的喝", "相册自拍最多的喝", "考驾照挂过科的喝", "没穿过包臀裙的喝", 
+                "谈恋爱爱秀恩爱的喝", "经常不回消息的喝", "抖音关注美女最多的喝", "微信置顶是工作群的喝", 
+                "最近分手的喝", "还没删前任的喝", "刷B站5级以上的喝", "点歌只会唱高潮的喝", 
+                "不会划拳的喝", "手机有合成大西瓜的喝", "用过栓Q梗的喝", "没买过卫生巾的喝", 
+                "手机交友软件最多的喝", "暖男喝", "一人一句土味情话，说不出的喝", "喂左边玩家喝", 
+                "找陌生人喂自己喝", "穿牛仔裤的喝", "知道奥利给来源的喝", "熬夜超过凌晨2点的喝", 
+                "当天没吃早饭的喝", "穿运动鞋的喝", "留过长头发的喝", "谈过3次以上恋爱的喝", 
+                "喜欢熬夜的喝", "会做饭的喝", "单身的喝", "当天化妆的喝", "手机壁纸是人物的喝", 
+                "喜欢喝奶茶的喝", "爱吃辣的喝", "养宠物的喝", "近视超过300度的喝", "经常失眠的喝", 
+                "去过省外旅游的喝", "会游泳的喝", "喜欢看恐怖片的喝", "玩过剧本杀的喝", "经常网购的喝", 
+                "微信余额少于100的喝", "今天洗头的喝", "穿拖鞋的喝", "头发染过色的喝", "经常健身的喝", 
+                "爱吃甜食的喝", "熬夜党喝", "社恐喝", "社牛喝", "喜欢追剧的喝", "会跳舞的喝", 
+                "喜欢运动的喝", "当天穿黑色衣服的喝", "当天穿白色衣服的喝", "戴耳环的喝", "戴手表的喝", 
+                "穿高跟鞋的喝", "爱吃夜宵的喝", "会打麻将的喝", "会打扑克的喝", "经常喝酒的喝", 
+                "第一次喝酒的喝", "酒量最好的喝", "酒量最差的喝", "当天最开心的喝", "当天最难过的喝", 
+                "年龄最大的喝", "年龄最小的喝", "体重最重的喝", "体重最轻的喝", "身高最高的喝", 
+                "身高最矮的喝", "第一个到现场的喝", "最后一个到现场的喝", "主动买单的喝", "今天没运动的喝", 
+                "不爱吃香菜的喝", "喜欢喝咖啡的喝", "经常换头像的喝", "今天运气最差的喝", "过（不喝）"
+            ],
+            drawnOptions: []
+        };
+
+        let wheelData = JSON.parse(JSON.stringify(defaultData));
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const mainTitle = document.getElementById('mainTitle');
+
+        function init() {
+            loadData();
+            document.getElementById('spinBtn').addEventListener('click', spin);
+            updateWheelUI();
+            
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'myCustomWheelData_drinking') {
+                    loadData();
+                    updateWheelUI();
+                }
+            });
+
+            // 监听窗口大小改变，防抖重绘，确保电脑端拉伸浏览器不模糊
+            window.addEventListener('resize', updateWheelUI);
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('myCustomWheelData_drinking');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object') {
+                        wheelData = parsed;
+                        if (!wheelData.options) wheelData.options = [];
+                        if (!wheelData.drawnOptions) wheelData.drawnOptions = [];
+                    }
+                } catch (e) {
+                    wheelData = JSON.parse(JSON.stringify(defaultData));
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('myCustomWheelData_drinking', JSON.stringify(wheelData));
+        }
+
+        function getActiveOptions() {
+            if (!wheelData.options) return [];
+            if (!wheelData.noRepeat) return wheelData.options;
+            const drawn = wheelData.drawnOptions || [];
+            return wheelData.options.filter(opt => !drawn.includes(opt));
+        }
+
+        function updateWheelUI() {
+            mainTitle.innerText = wheelData.title || '自定义转盘';
+            drawWheel();
+        }
+
+        function drawWheel() {
+            const activeOptions = getActiveOptions();
+            const numOptions = activeOptions.length;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (numOptions === 0) {
+                ctx.beginPath();
+                ctx.fillStyle = "#333";
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#ff7675";
+                ctx.font = "bold 32px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("暂无选项，请在配置页面添加规则", centerX, centerY);
+                return;
+            }
+
+            const arc = Math.PI * 2 / numOptions;
+            
+            // 基于 1000px 画布的高清字体大小优化
+            let fontSize = 36;
+            if (numOptions > 60) fontSize = 13;
+            else if (numOptions > 40) fontSize = 16;
+            else if (numOptions > 20) fontSize = 22;
+            else if (numOptions > 10) fontSize = 28;
+
+            for (let i = 0; i < numOptions; i++) {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.lineTo(centerX, centerY);
+                ctx.fill();
+                
+                ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = `bold ${fontSize}px Arial`;
+                
+                let text = activeOptions[i];
+                if (numOptions > 40 && text.length > 7) {
+                    text = text.substring(0, 6) + "..";
+                }
+                ctx.fillText(text, radius - 35, 0); 
+                ctx.restore();
+            }
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            let activeOptions = getActiveOptions();
+            
+            if (wheelData.noRepeat && activeOptions.length === 0) {
+                alert("规则库已全被抽过一遍啦！已自动重置规则池。");
+                wheelData.drawnOptions = [];
+                saveData();
+                updateWheelUI();
+                activeOptions = getActiveOptions();
+            }
+
+            if (activeOptions.length === 0) {
+                alert("请在配置页面中添加规则指令！");
+                return;
+            }
+
+            isSpinning = true;
+            const durationSec = wheelData.duration || 4;
+            const randomDegree = Math.floor(Math.random() * 360);
+            const extraSpins = durationSec * 360 * 2; 
+            
+            currentRotation += extraSpins + randomDegree;
+            canvas.style.transition = `transform ${durationSec}s cubic-bezier(0.1, 0.8, 0.1, 1)`;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                calculateWinner();
+            }, durationSec * 1000);
+        }
+
+        function calculateWinner() {
+            const activeOptions = getActiveOptions();
+            if (activeOptions.length === 0) return;
+            
+            const degreesPerSlice = 360 / activeOptions.length;
+            const normalizedRotation = currentRotation % 360;
+            const winningAngle = (270 - normalizedRotation + 360) % 360;
+            const winningIndex = Math.floor(winningAngle / degreesPerSlice) % activeOptions.length;
+            const winner = activeOptions[winningIndex];
+
+            if (wheelData.noRepeat) {
+                if (!wheelData.drawnOptions) wheelData.drawnOptions = [];
+                if (!wheelData.drawnOptions.includes(winner)) {
+                    wheelData.drawnOptions.push(winner);
+                    saveData();
+                }
+            }
+
+            document.getElementById('resultText').innerText = winner;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+            updateWheelUI(); 
+        }
+
+        init();
+    </script>
+</body>
+</html>

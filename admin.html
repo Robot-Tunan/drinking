@@ -33,61 +33,62 @@
 
         .settings-content {
             width: 100%;
-            max-width: 550px; /* 电脑端自动锁死最佳宽度 */
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-width: 550px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        .setting-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .setting-row {
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #74b9ff;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 0;
         }
-        .setting-group label { font-weight: bold; font-size: 14px; color: #b2bec3; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #b2bec3;
+        }
+
         input[type="text"], input[type="number"], textarea {
             width: 100%;
-            padding: 12px;
+            background-color: #1e1e1e;
             border: 1px solid #444;
             border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            background-color: #1e1e1e;
+            padding: 10px 14px;
             color: #fff;
-            -webkit-appearance: none;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus { 
-            border-color: var(--primary-color); 
-        }
-        textarea { resize: vertical; min-height: 100px; }
-        
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
             font-size: 15px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-            text-align: center;
+            transition: border-color 0.2s;
         }
-        .btn:active { opacity: 0.8; }
-        .btn-blue { background-color: #3498db; color: #fff; }
-        .btn-danger { background-color: #3a3a3a; color: #ff7675; border: 1px solid #ff7675; }
-        .btn-small { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
-        
-        /* 滑块开关 */
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .switch {
             position: relative;
             display: inline-block;
@@ -96,188 +97,162 @@
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #555;
-            transition: .3s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444; transition: .3s; border-radius: 34px;
         }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
+        .slider::before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px;
+            background-color: white; transition: .3s; border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
+        input:checked + .slider::before { transform: translateX(24px); }
 
-        /* 规则池状态区 */
-        .pool-status-bar {
+        .status-bar {
+            background-color: rgba(116, 185, 255, 0.1);
+            border: 1px dashed #74b9ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            color: #74b9ff;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #341f1f;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #ff7675;
-            border: 1px dashed #ff7675;
+            margin-top: 10px;
         }
 
+        .btn {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-danger { background-color: #d63031; }
+
         .options-list {
-            max-height: 250px;
+            max-height: 300px;
             overflow-y: auto;
             border: 1px solid #444;
             border-radius: 8px;
-            background: #1e1e1e;
+            background-color: #1e1e1e;
         }
+
         .option-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 15px;
+            padding: 10px 14px;
             border-bottom: 1px solid #333;
             font-size: 14px;
         }
-        .option-item.is-drawn {
-            text-decoration: line-through;
-            color: #666;
-            background-color: #252525;
-        }
         .option-item:last-child { border-bottom: none; }
+        .option-item.is-drawn {
+            color: #666;
+            text-decoration: line-through;
+            background-color: rgba(0,0,0,0.15);
+        }
+
         .delete-btn {
-            background: #442222;
-            border: none;
-            color: #ff7675;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 12px;
+            background: none; border: none; color: #ff7675; cursor: pointer; font-size: 16px;
+        }
+
+        .grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <h1 class="page-title">⚙️ 转盘大厅核心配置后台</h1>
-    
+    <div class="page-title">⚙️ 幸运大转盘 - 实时后台配置</div>
+
     <div class="settings-content">
-        <div class="setting-group">
-            <label>转盘标题</label>
-            <input type="text" id="titleInput" placeholder="请输入标题，例如：这次该谁喝">
-        </div>
-
-        <div class="setting-group">
-            <label>转圈时长 (秒)</label>
-            <input type="number" id="durationInput" min="1" max="15" value="4">
-        </div>
-
-        <div class="setting-group">
-            <div class="setting-row">
-                <label>不重复抽取 (抽中后剔除规则)</label>
+        <div class="card">
+            <div class="card-title">基本信息</div>
+            <div class="form-group">
+                <label>转盘大标题</label>
+                <input type="text" id="titleInput" placeholder="例如：今晚谁买单">
+            </div>
+            <div class="form-group">
+                <label>转动持续时间 (秒)</label>
+                <input type="number" id="durationInput" min="1" max="20" value="4">
+            </div>
+            <div class="form-group toggle-container" style="margin-top: 20px;">
+                <div>
+                    <label style="margin-bottom: 2px; color: #fff;">不重复抽取模式</label>
+                    <span style="font-size: 12px; color: #888;">开启后，被抽中的规则将暂时从轮盘中滤除</span>
+                </div>
                 <label class="switch">
-                    <input type="checkbox" id="noRepeatToggle">
+                    <input type="checkbox" id="noRepeatToggle" checked>
                     <span class="slider"></span>
                 </label>
             </div>
+            
+            <div class="status-bar" id="poolStatusBar" style="display: none;">
+                <span id="poolStatusText">已淘汰：0 / 0 条规则</span>
+                <button class="btn" style="padding: 4px 10px; font-size: 12px;" onclick="resetDrawnPool()">重置过滤池</button>
+            </div>
         </div>
 
-        <div class="pool-status-bar" id="poolStatusBar" style="display: none;">
-            <span id="poolStatusText">已淘汰：0 / 0 条规则</span>
-            <button class="btn btn-danger btn-small" onclick="resetDrawnPool()">重置规则池</button>
+        <div class="card">
+            <div class="card-title">批量追加新规则</div>
+            <textarea id="batchInput" rows="4" placeholder="每行输入一条新规则，按回车换行..."></textarea>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;" onclick="addBatchOptions()">⚡ 确认追加到规则库</button>
         </div>
 
-        <div class="setting-group">
-            <label>当前规则列表 (共 <span id="totalCount">0</span> 条)</label>
-            <div class="options-list" id="optionsList"></div>
+        <div class="card">
+            <div class="card-title">
+                <span>当前规则库 (<span id="totalCount">0</span>)</span>
+                <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="startNewWheel()">清空规则</button>
+            </div>
+            <div class="options-list" id="optionsList">
+                </div>
+            <div class="grid-2">
+                <button class="btn" onclick="resetDefaults()">恢复初始100条</button>
+            </div>
         </div>
-
-        <div class="setting-group">
-            <label>批量追加新规则 (每行一个)</label>
-            <textarea id="batchInput" placeholder="输入新的规则内容&#10;回车换行可输入多个"></textarea>
-            <button class="btn" onclick="addBatchOptions()">追加到列表</button>
-        </div>
-        
-        <button class="btn btn-blue" onclick="startNewWheel()">✨ 开启全新游戏转盘</button>
-        <button class="btn btn-danger" onclick="resetDefaults()">恢复初始100条惩罚规则</button>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 内置初始数据保持一致
-        const defaultData = {
-            title: "这次该谁喝",
-            duration: 4,
-            noRepeat: true,
-            options: [
-                "穿裙子的喝", "不会唱歌的喝", "不会做饭的喝", "有纹身的喝", "朋友圈三天可见的喝", 
-                "手机电量低于50%的喝", "骰子猜左右手", "指甲最长的喝", "这个月过生日的喝", "不会开车的喝", 
-                "美甲有钻的喝", "3天内发过朋友圈的喝", "有对象的喝", "戴眼镜的喝", "发际线最高的喝", 
-                "抽烟的喝", "短发的喝", "相册自拍最多的喝", "考驾照挂过科的喝", "没穿过包臀裙的喝", 
-                "谈恋爱爱秀恩爱的喝", "经常不回消息的喝", "抖音关注美女最多的喝", "微信置顶是工作群的喝", 
-                "最近分手的喝", "还没删前任的喝", "刷B站5级以上的喝", "点歌只会唱高潮的喝", 
-                "不会划拳的喝", "手机有合成大西瓜的喝", "用过栓Q梗的喝", "没买过卫生巾的喝", 
-                "手机交友软件最多的喝", "暖男喝", "一人一句土味情话，说不出的喝", "喂左边玩家喝", 
-                "找陌生人喂自己喝", "穿牛仔裤的喝", "知道奥利给来源的喝", "熬夜超过凌晨2点的喝", 
-                "当天没吃早饭的喝", "穿运动鞋的喝", "留过长头发的喝", "谈过3次以上恋爱的喝", 
-                "喜欢熬夜的喝", "会做饭的喝", "单身的喝", "当天化妆的喝", "手机壁纸是人物的喝", 
-                "喜欢喝奶茶的喝", "爱吃辣的喝", "养宠物的喝", "近视超过300度的喝", "经常失眠的喝", 
-                "去过省外旅游的喝", "会游泳的喝", "喜欢看恐怖片的喝", "玩过剧本杀的喝", "经常网购的喝", 
-                "微信余额少于100的喝", "今天洗头的喝", "穿拖鞋的喝", "头发染过色的喝", "经常健身的喝", 
-                "爱吃甜食的喝", "熬夜党喝", "社恐喝", "社牛喝", "喜欢追剧的喝", "会跳舞的喝", 
-                "喜欢运动的喝", "当天穿黑色衣服的喝", "当天穿白色衣服的喝", "戴耳环的喝", "戴手表的喝", 
-                "穿高跟鞋的喝", "爱吃夜宵的喝", "会打麻将的喝", "会打扑克的喝", "经常喝酒的喝", 
-                "第一次喝酒的喝", "酒量最好的喝", "酒量最差的喝", "当天最开心的喝", "当天最难过的喝", 
-                "年龄最大的喝", "年龄最小的喝", "体重最重的喝", "体重最轻的喝", "身高最高的喝", 
-                "身高最矮的喝", "第一个到现场的喝", "最后一个到现场的喝", "主动买单的喝", "今天没运动的喝", 
-                "不爱吃香菜的喝", "喜欢喝咖啡的喝", "经常换头像的喝", "今天运气最差的喝", "过（不喝）"
-            ],
-            drawnOptions: []
+        let socket;
+        let wheelData = { title: "", duration: 4, noRepeat: false, options: [], drawnOptions: [] };
+
+        let titleInput, durationInput, noRepeatToggle, poolStatusBar, poolStatusText, optionsList, batchInput, totalCountSpan;
+
+        window.onload = function() {
+            init();
         };
 
-        let wheelData = JSON.parse(JSON.stringify(defaultData));
-
-        const titleInput = document.getElementById('titleInput');
-        const durationInput = document.getElementById('durationInput');
-        const noRepeatToggle = document.getElementById('noRepeatToggle');
-        const poolStatusBar = document.getElementById('poolStatusBar');
-        const poolStatusText = document.getElementById('poolStatusText');
-        const optionsList = document.getElementById('optionsList');
-        const batchInput = document.getElementById('batchInput');
-        const totalCountSpan = document.getElementById('totalCount');
-
         function init() {
-            loadData();
-            bindEvents();
-            updateSettingsUI();
-        }
+            titleInput = document.getElementById('titleInput');
+            durationInput = document.getElementById('durationInput');
+            noRepeatToggle = document.getElementById('noRepeatToggle');
+            poolStatusBar = document.getElementById('poolStatusBar');
+            poolStatusText = document.getElementById('poolStatusText');
+            optionsList = document.getElementById('optionsList');
+            batchInput = document.getElementById('batchInput');
+            totalCountSpan = document.getElementById('totalCount');
 
-        function loadData() {
-            const saved = localStorage.getItem('myCustomWheelData_drinking');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && typeof parsed === 'object') {
-                        wheelData = parsed;
-                        if (!wheelData.options) wheelData.options = [];
-                        if (!wheelData.drawnOptions) wheelData.drawnOptions = [];
-                    }
-                } catch (e) {
-                    wheelData = JSON.parse(JSON.stringify(defaultData));
-                }
-            }
+            socket = io();
+            bindEvents();
+            
+            socket.on('initData', (data) => {
+                wheelData = data;
+                updateSettingsUI();
+            });
+
+            socket.on('syncData', (data) => {
+                wheelData = data;
+                updateSettingsUI();
+            });
         }
 
         function saveData() {
-            localStorage.setItem('myCustomWheelData_drinking', JSON.stringify(wheelData));
+            if (socket) socket.emit('updateData', wheelData);
         }
 
         function bindEvents() {
@@ -299,6 +274,8 @@
         }
 
         function updateSettingsUI() {
+            if(!titleInput) return;
+
             titleInput.value = wheelData.title || '';
             durationInput.value = wheelData.duration || 4;
             noRepeatToggle.checked = !!wheelData.noRepeat;
@@ -309,7 +286,7 @@
             
             if (wheelData.noRepeat) {
                 poolStatusBar.style.display = 'flex';
-                poolStatusText.innerText = `已淘汰：${drawnOptCount} / ${totalOptCount} 条规则`;
+                poolStatusText.innerText = `已淘汰：${drawnOptCount} / ${totalOptCount} 条`;
             } else {
                 poolStatusBar.style.display = 'none';
             }
@@ -376,15 +353,11 @@
         }
 
         function resetDefaults() {
-            if(confirm("确定要恢复到初始的100条酒桌规则吗？这会清除你临时追加的选项。")) {
-                wheelData = JSON.parse(JSON.stringify(defaultData));
-                saveData();
-                updateSettingsUI();
-                alert("已重置为初始100条酒桌规则！");
+            if(confirm("确定要恢复到初始规则吗？")) {
+                socket.emit('resetData');
+                alert("已发送重置请求！");
             }
         }
-
-        init();
     </script>
 </body>
 </html>
